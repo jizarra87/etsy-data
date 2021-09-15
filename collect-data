@@ -1,0 +1,39 @@
+#import the libraries we are going to use. 
+from etsy2 import Etsy
+import pandas as pd 
+
+#connect with the API, get you api key from etsy 
+etsy = Etsy(api_key='etsy api-key')
+
+#Get the data of one product we want to compare with other products. The listing_id is a number in the link of the product
+#you could get from etsy
+producto_ref = etsy.getListing(listing_id = "866093262")
+
+#create a dataframe with the data of this product. 
+producto_ref_df = pd.DataFrame(producto_ref)
+
+#start a new dataframe where we are going to put all de data
+find_results = etsy.findAllListingActive(tags = 'photo background',
+                                         limit = 100)
+results = pd.DataFrame(find_results)
+
+#create a for loop to look in etsy for all products related with the tags of the product we are comparing. 
+#the tags is a datafame column type list. 
+for i in producto_ref_df.tags:
+    #iterate each key word in the list
+    for x in i:
+        #use the key word and get the products in the first 10 pages
+        for j in range(1,10):
+            #call the procedure go get all listing with the tag, limit 100 and the 10 pages
+            find_results = etsy.findAllListingActive(tags = x, limit = 100, page = j)
+            #put the data in a dataframe
+            df = pd.DataFrame(find_results)
+            #join the dataframes
+            frames = [df, results]
+            results = pd.concat(frames)
+#eliminate the duplicates
+productos_ref = results.drop_duplicates(subset = ['listing_id'])
+#verify the shape 
+productos_ref.shape
+#create the csv
+productos_ref.to_csv('back_drop_data.csv', index=False)   
